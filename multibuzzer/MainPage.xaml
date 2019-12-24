@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" xmlns:d="http://xamarin.com/schemas/2014/forms/design" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="multibuzzer.MainPage">
+    <StackLayout>
+        <Label> Choose to be client or server</Label>
+        <Button Text="Become Server" Clicked="Start_Server"/>
+        <Button Text="Become Client" Clicked="Start_Client"/>
+
+    </StackLayout>
+</ContentPage>

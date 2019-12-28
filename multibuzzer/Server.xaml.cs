@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using Plugin.BluetoothLE;
 using Plugin.BluetoothLE.Server;
@@ -11,61 +12,151 @@ using IGattService = Plugin.BluetoothLE.Server.IGattService;
 namespace multibuzzer
 {
     public partial class Server : ContentPage
-    {
-
-
-        List<Guid> services;
-        private IGattServer server;
+    { 
+        //services
+        private List<Guid> services;
         private IGattService buzzerService;
-        private Guid buzzerServiceGuid;
-        private Guid lockStatusGuid;
-
+        
+        //game state
         //O = open
         //C = closed
-        private Char lockStatus;
+        private string lockStatus = "O";
+        private string buzzDevice;
+        private Dictionary<Guid, string> deviceIdentities;
 
-        public Server()
+        //characteristics
+        private IGattCharacteristic lockStatusChar;
+        private IGattCharacteristic buzzChar;
+        private IGattCharacteristic identityChar;
+
+        //networking
+        private string serverName;
+        private IAdapter adapter;
+        private IGattServer gattServer;
+
+        public Server(string serverName)
         {
-            services = new List<Guid>(); 
-            lockStatus = 'O';
+            this.serverName = serverName;
 
-            //create buzzer service 
-            server = (IGattServer) CrossBleAdapter.Current.CreateGattServer();
-            buzzerServiceGuid = Guid.NewGuid();
-            services.Add(buzzerServiceGuid);
-            buzzerService = server.CreateService(buzzerServiceGuid, true);
-
-
-            //create characteristic to inform connected devices about the lock out
-            //status of the buzzer unit 
-            lockStatusGuid = Guid.NewGuid();
-            IGattCharacteristic lockStatusChar = buzzerService.AddCharacteristic(lockStatusGuid,
-                    CharacteristicProperties.Read | CharacteristicProperties.Write,
-                    GattPermissions.Read | GattPermissions.Write);
-
-            lockStatusChar.WhenReadReceived().Subscribe(req =>
+            //initialization
+            services = new List<Guid>();
+            adapter = CrossBleAdapter.Current;
+            lockStatus = "C";
+            buzzDevice = "";
+            deviceIdentities = new Dictionary<Guid, string>();
+            adapter.WhenReadyCreateServer().Subscribe(server =>
             {
-                //transmit character lockStatus as 1 length byte array
-                byte[] transmit = new byte[1];
-                transmit[0] = (byte) lockStatus; 
-                req.Value = transmit; 
+                Debug.WriteLine("Got a server");
+                //when does this fire?
+                gattServer = server;
+                //create services
+                CreateBuzzerService();
+                //add characteristics
+                CreateBuzzChar();
+                CreateIdentityChar();
+                CreateLockStatusChar();
+                StartServer();
             });
-
-
-            //start advertising the server 
-            CrossBleAdapter.Current.Advertiser.Start(new AdvertisementData
-            {
-                LocalName = "MultiBuzzer",
-                ServiceUuids = services
-
-            });
+   
             InitializeComponent();
-         
+            Server_Name.Text = "Server Name: " + serverName;
         }
 
-        private async void Send_Text(object sender, System.EventArgs e)
+        private void CreateBuzzerService()
         {
-            //blank
+            //create buzzer service 
+            services.Add(StaticGuids.buzzerServiceGuid);
+            buzzerService = gattServer.CreateService(StaticGuids.buzzerServiceGuid, true);
+            Debug.WriteLine(gattServer.Services.Count);
+        }
+
+        private void CreateLockStatusChar()
+        {
+            //create characteristic to inform connected devices about the lock out
+            //status of the buzzer unit
+
+            //lockStatusGuid = Guid.NewGuid();
+
+            lockStatusChar = buzzerService.AddCharacteristic(StaticGuids.lockStatusGuid,
+                        CharacteristicProperties.Indicate | CharacteristicProperties.Notify,
+                        GattPermissions.Read | GattPermissions.Write
+            );
+           
+            lockStatusChar.WhenDeviceSubscriptionChanged().Subscribe(e =>
+            {
+                Debug.WriteLine("Got subscriptions: " + e.ToString());
+                Debug.WriteLine("UUID" + lockStatusChar.Uuid.ToString());
+                lockStatusChar.Broadcast(Encoding.UTF8.GetBytes(lockStatus));
+            });
+        }
+
+        private void CreateBuzzChar()
+        {
+            buzzChar = buzzerService.AddCharacteristic(StaticGuids.buzzCharGuid,
+                CharacteristicProperties.Write, GattPermissions.Read | GattPermissions.Write);
+            buzzChar.WhenWriteReceived().Subscribe(writeRequest =>
+            {
+                printdebug("buzzer write request");
+
+                Debug.WriteLine("Buzzed recieved on write");
+                Buzz_Player.Text = deviceIdentities[writeRequest.Device.Uuid];
+                Buzzed();
+            });
+        }
+
+        private void CreateIdentityChar()
+        {
+            //create characteristic which allows devices to self report nick names
+            identityChar = buzzerService.AddCharacteristic(StaticGuids.identityCharGuid,
+                CharacteristicProperties.Write | CharacteristicProperties.Read, GattPermissions.Read | GattPermissions.Write);
+            identityChar.WhenWriteReceived().Subscribe(writeRequest =>
+            {
+                printdebug("identity write request");
+                string name = Encoding.UTF8.GetString(writeRequest.Value, 0, writeRequest.Value.Length);
+                Debug.WriteLine("Identity provided: " + name);
+                deviceIdentities[writeRequest.Device.Uuid] = name;
+            });
+
+        }
+
+        private void StartServer()
+        {
+            gattServer.AddService(buzzerService);
+            //start advertising the server
+            CrossBleAdapter.Current.Advertiser.Start(new AdvertisementData
+            {
+                LocalName = serverName,
+                ServiceUuids = services
+            });
+        }
+
+        private void Cleared(object sender, System.EventArgs e)
+        {
+            buzzDevice = "";
+            Buzz_Player.Text = "";
+            lockStatus = "O" ;
+            if(lockStatusChar != null)
+            {
+                Debug.WriteLine("Cleared");
+                lockStatusChar.Broadcast(Encoding.UTF8.GetBytes(lockStatus));
+               
+            }
+        }
+
+        private void Buzzed()
+        {
+            lockStatus = "C";
+            if (lockStatusChar != null)
+            {
+                lockStatusChar.Broadcast(Encoding.UTF8.GetBytes(lockStatus));
+            }
+        }
+
+        private void printdebug(string s)
+        {
+            Label debug = new Label();
+            debug.Text = s;
+            BleDebug.Children.Add(debug);
         }
     }
 }

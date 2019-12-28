@@ -1,8 +1,11 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" x:Class="multibuzzer.Client">
-    <StackLayout>
-            <Label> Let's start a server!</Label>
+    <StackLayout Spacing="14">
+            <Label x:Name="Server_Name">Trying to connect to server</Label>
             <Label x:Name="Status"></Label>
-            <StackLayout x:Name="Debug"></StackLayout>
+            <Label x:Name="Nickname"></Label>
+            <StackLayout x:Name="BleDebug"></StackLayout>
+
+            <Button Text="Buzz" Clicked="Buzz"></Button>
     </StackLayout>
 </ContentPage>

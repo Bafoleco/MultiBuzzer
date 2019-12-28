@@ -25,7 +25,7 @@
 	<key>CFBundleDisplayName</key>
 	<string>multibuzzer</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.bayfoleycox.multibuzzer</string>
+	<string>com.bayfoleycox.MultiBuzzer</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>CFBundleName</key>
@@ -41,5 +41,9 @@
 	<string>Requesting connection</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Requesting Connection</string>
+	<key>UIStatusBarHidden</key>
+	<true/>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
 </dict>
 </plist>

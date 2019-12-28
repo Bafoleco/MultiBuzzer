@@ -19,15 +19,15 @@ namespace multibuzzer
 
         private async void Start_Server(object sender, System.EventArgs e)
         {
-            var serverPage = new Server();
-            await Navigation.PushModalAsync(serverPage);
+            var serverSetupPage = new ServerSetup();
+            await Navigation.PushModalAsync(serverSetupPage);
         }
 
 
         private async void Start_Client(object sender, System.EventArgs e)
         {
-            var clientPage = new Client();
-            await Navigation.PushModalAsync(clientPage);
+            var clientSetupPage = new ChooseServer();
+            await Navigation.PushModalAsync(clientSetupPage);
         }
     }
 }

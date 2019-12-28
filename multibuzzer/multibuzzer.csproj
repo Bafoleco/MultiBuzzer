@@ -12,5 +12,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="MyPage.xaml.cs" />
+    <Compile Remove="EmptyClass.cs" />
   </ItemGroup>
 </Project>

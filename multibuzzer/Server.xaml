@@ -1,9 +1,14 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" x:Class="multibuzzer.Server">
-    <StackLayout>
+    <StackLayout Spacing="14">
         <Label> Let's start a server!</Label>
-
+        <Label x:Name="Server_Name"> Server Name </Label>
         <StackLayout x:Name="Services_List"></StackLayout>
-        <Entry Completed="Send_Text"></Entry>
+        <Label> Buzzed in Player: </Label>
+        <Label x:Name="Buzz_Player"></Label>
+
+        <Button Text="Clear" Clicked="Cleared"></Button>
+        <StackLayout x:Name="BleDebug"></StackLayout>
+
     </StackLayout>
 </ContentPage>

@@ -1,11 +1,13 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" x:Class="multibuzzer.ChooseServer">
-    <StackLayout>
+    <StackLayout x:Name="Main">
         <Label>Get the server name from your host!</Label>
-        <Entry Completed="Server_Picked"></Entry>
+        <Entry x:Name="Server_Picked"></Entry>
         <Label>Choose a nickname</Label>
-        <Entry Completed="Nickname_Picked"></Entry>
+        <Entry x:Name="Nickname_Picked"></Entry>
 
+       
         <Button Text="Start" Clicked="Start"></Button>
+
     </StackLayout>
 </ContentPage>

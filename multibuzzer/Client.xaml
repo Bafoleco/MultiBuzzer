@@ -1,11 +1,22 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<ContentPage xmlns="http://xamarin.com/schemas/2014/forms" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" x:Class="multibuzzer.Client">
-    <StackLayout Spacing="14">
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" x:Class="multibuzzer.Client"
+             BackgroundColor="White">
+
+    <StackLayout x:Name="ClientScreen">
+        <StackLayout x:Name="Game">
             <Label x:Name="Server_Name">Trying to connect to server</Label>
-            <Label x:Name="Status"></Label>
             <Label x:Name="Nickname"></Label>
+            <RelativeLayout HorizontalOptions="Center">
+                <Button BackgroundColor="DarkGray"  HeightRequest="250"  CornerRadius="125" WidthRequest="250" x:Name="Buzz_Button"
+                        BorderWidth="15" BorderColor="Gray" Text="Buzz" Clicked="Buzz" FontSize="Title" TextColor="Black"></Button>
+            </RelativeLayout>
             <StackLayout x:Name="BleDebug"></StackLayout>
 
-            <Button Text="Buzz" Clicked="Buzz"></Button>
+        </StackLayout>
+
+        <StackLayout x:Name="LoadUI">
+            <Label x:Name="LoadLabel"></Label>
+        </StackLayout>
     </StackLayout>
+  
 </ContentPage>

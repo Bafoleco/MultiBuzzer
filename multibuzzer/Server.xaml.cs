@@ -21,29 +21,37 @@ namespace multibuzzer
         //O = open
         //C = closed
         private string lockStatus = "O";
-        private string buzzDevice;
+        private Guid buzzDevice;
         private Dictionary<Guid, string> deviceIdentities;
+        private Dictionary<string, List<Guid>> teams;
 
         //characteristics
         private IGattCharacteristic lockStatusChar;
         private IGattCharacteristic buzzChar;
         private IGattCharacteristic identityChar;
+        private IGattCharacteristic teamChar;
 
         //networking
         private string serverName;
         private IAdapter adapter;
         private IGattServer gattServer;
 
-        public Server(string serverName)
+        public Server(string serverName, List<string> teamNames)
         {
             this.serverName = serverName;
+            teams = new Dictionary<string, List<Guid>>();
+            foreach(string teamName in teamNames)
+            {
+                teams[teamName] = new List<Guid>();
+            }
 
             //initialization
             services = new List<Guid>();
             adapter = CrossBleAdapter.Current;
             lockStatus = "C";
-            buzzDevice = "";
             deviceIdentities = new Dictionary<Guid, string>();
+            buzzDevice = Guid.Empty;
+
             adapter.WhenReadyCreateServer().Subscribe(server =>
             {
                 Debug.WriteLine("Got a server");
@@ -52,9 +60,10 @@ namespace multibuzzer
                 //create services
                 CreateBuzzerService();
                 //add characteristics
+                CreateLockStatusChar();
                 CreateBuzzChar();
                 CreateIdentityChar();
-                CreateLockStatusChar();
+                CreateTeamChar();
                 StartServer();
             });
    
@@ -64,10 +73,8 @@ namespace multibuzzer
 
         private void CreateBuzzerService()
         {
-            //create buzzer service 
             services.Add(StaticGuids.buzzerServiceGuid);
             buzzerService = gattServer.CreateService(StaticGuids.buzzerServiceGuid, true);
-            Debug.WriteLine(gattServer.Services.Count);
         }
 
         private void CreateLockStatusChar()
@@ -76,7 +83,6 @@ namespace multibuzzer
             //status of the buzzer unit
 
             //lockStatusGuid = Guid.NewGuid();
-
             lockStatusChar = buzzerService.AddCharacteristic(StaticGuids.lockStatusGuid,
                         CharacteristicProperties.Indicate | CharacteristicProperties.Notify,
                         GattPermissions.Read | GattPermissions.Write
@@ -86,7 +92,8 @@ namespace multibuzzer
             {
                 Debug.WriteLine("Got subscriptions: " + e.ToString());
                 Debug.WriteLine("UUID" + lockStatusChar.Uuid.ToString());
-                lockStatusChar.Broadcast(Encoding.UTF8.GetBytes(lockStatus));
+                //TODO factor this out into a method
+                lockStatusChar.Broadcast(Encoding.UTF8.GetBytes(lockStatus + buzzDevice.ToString()));
             });
         }
 
@@ -96,11 +103,14 @@ namespace multibuzzer
                 CharacteristicProperties.Write, GattPermissions.Read | GattPermissions.Write);
             buzzChar.WhenWriteReceived().Subscribe(writeRequest =>
             {
-                printdebug("buzzer write request");
-
-                Debug.WriteLine("Buzzed recieved on write");
-                Buzz_Player.Text = deviceIdentities[writeRequest.Device.Uuid];
-                Buzzed();
+                if(lockStatus == "O")
+                {
+                    buzzDevice = writeRequest.Device.Uuid;
+                    string buzzName = deviceIdentities[buzzDevice];
+                    Buzz_Player.Text = buzzName;
+                    lockStatus = "C";
+                    lockStatusChar.Broadcast(Encoding.UTF8.GetBytes(lockStatus + buzzDevice.ToString() + buzzName));
+                }               
             });
         }
 
@@ -112,11 +122,37 @@ namespace multibuzzer
             identityChar.WhenWriteReceived().Subscribe(writeRequest =>
             {
                 printdebug("identity write request");
-                string name = Encoding.UTF8.GetString(writeRequest.Value, 0, writeRequest.Value.Length);
-                Debug.WriteLine("Identity provided: " + name);
-                deviceIdentities[writeRequest.Device.Uuid] = name;
-            });
+                string identityWrite = Encoding.UTF8.GetString(writeRequest.Value);
 
+                if(identityWrite[0] == ':')
+                {
+                    teams[identityWrite.Substring(1)].Add(writeRequest.Device.Uuid);
+                    updateTeams();
+                } else
+                {
+                    Debug.WriteLine("Identity provided: " + identityWrite);
+                    deviceIdentities[writeRequest.Device.Uuid] = identityWrite;
+                }
+            });
+            //inform connected devices of their own UUID
+            identityChar.WhenReadReceived().Subscribe(read =>
+            {
+                read.Value = Encoding.UTF8.GetBytes(read.Device.Uuid.ToString());
+            });
+        }
+
+        private void CreateTeamChar()
+        {
+            teamChar = buzzerService.AddCharacteristic(StaticGuids.teamCharGuid,
+                CharacteristicProperties.Indicate | CharacteristicProperties.Notify,
+                        GattPermissions.Read | GattPermissions.Write
+            );
+
+            //when a new device is added give all team information
+            teamChar.WhenDeviceSubscriptionChanged().Subscribe(e =>
+            {
+                teamChar.Broadcast(teamInfo(), e.Device);
+            });
         }
 
         private void StartServer()
@@ -128,27 +164,41 @@ namespace multibuzzer
                 LocalName = serverName,
                 ServiceUuids = services
             });
+
+        }
+
+        private byte[] teamInfo()
+        {
+            if(teams.Keys.Count != 0)
+            {
+                string teamInfoString = "";
+
+                foreach (string teamName in teams.Keys)
+                {
+                    teamInfoString += teamName;
+                    foreach (Guid g in teams[teamName])
+                    {
+                        teamInfoString += ":" + g.ToString();
+                    }
+                    teamInfoString += "::";
+                }
+                return Encoding.UTF8.GetBytes(teamInfoString.Substring(0, teamInfoString.Length - 2));
+            }
+            else
+            {
+                return Encoding.UTF8.GetBytes("nt");
+            }
         }
 
         private void Cleared(object sender, System.EventArgs e)
         {
-            buzzDevice = "";
+            buzzDevice = Guid.Empty;
             Buzz_Player.Text = "";
             lockStatus = "O" ;
             if(lockStatusChar != null)
             {
                 Debug.WriteLine("Cleared");
-                lockStatusChar.Broadcast(Encoding.UTF8.GetBytes(lockStatus));
-               
-            }
-        }
-
-        private void Buzzed()
-        {
-            lockStatus = "C";
-            if (lockStatusChar != null)
-            {
-                lockStatusChar.Broadcast(Encoding.UTF8.GetBytes(lockStatus));
+                lockStatusChar.Broadcast(Encoding.UTF8.GetBytes(lockStatus + buzzDevice.ToString()));
             }
         }
 
@@ -157,6 +207,11 @@ namespace multibuzzer
             Label debug = new Label();
             debug.Text = s;
             BleDebug.Children.Add(debug);
+        }
+
+        private void updateTeams(string team, Guid guid)
+        {
+            teamChar.Broadcast(Encoding.UTF8.GetBytes(team + "::" + guid.ToString()));
         }
     }
 }

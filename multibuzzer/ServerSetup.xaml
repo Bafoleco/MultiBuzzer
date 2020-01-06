@@ -1,7 +1,18 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms" xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml" x:Class="multibuzzer.ServerSetup">
-    <StackLayout Spacing="14">
+    <StackLayout x:Name="Main">
         <Label> Name your MultiBuzzer server! Your players will use this name to connect with you.</Label>
-        <Entry Completed="Server_Named"></Entry>
+        <Entry x:Name="ServerName"></Entry>
+
+         <StackLayout Orientation="Horizontal">
+            <CheckBox x:Name="UsingTeams" CheckedChanged="IsTeamChanged"></CheckBox>
+            <Label> Individual or Team Game?</Label>
+        </StackLayout>
+        <StackLayout x:Name="TeamNameChoice">
+            <Entry x:Name="OneName" Placeholder="Team One Name"></Entry>
+            <Entry  x:Name="TwoName"  Placeholder="Team Two Name"></Entry>
+        </StackLayout>
+
+        <Button Text="Start Server" Clicked="Start"> </Button>
     </StackLayout>
 </ContentPage>

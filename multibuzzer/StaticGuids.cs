@@ -3,7 +3,6 @@ namespace multibuzzer
 {
     public static class StaticGuids
     {
-
         //services
         public static readonly Guid buzzerServiceGuid = Guid.Parse("3360cfb6-66fc-41cd-bf92-c4cb493eb399");
 
@@ -15,6 +14,5 @@ namespace multibuzzer
         public static readonly Guid identityCharGuid  = Guid.Parse("d7f054f2-7ca7-4bc8-a6b2-675c9c8b3f79");
 
         public static readonly Guid teamCharGuid      = Guid.Parse("b0f79e9d-a7b3-459b-a9d9-ea25422cc900");
-
     }
 }

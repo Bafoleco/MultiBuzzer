@@ -141,6 +141,11 @@ namespace multibuzzer
             });
         }
 
+        private void updateTeams()
+        {
+            throw new NotImplementedException();
+        }
+
         private void CreateTeamChar()
         {
             teamChar = buzzerService.AddCharacteristic(StaticGuids.teamCharGuid,

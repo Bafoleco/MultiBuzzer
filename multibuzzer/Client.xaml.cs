@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using System.Text;
 using Plugin.BluetoothLE;
+using Plugin.SimpleAudioPlayer;
 using Xamarin.Forms;
 using IDevice = Plugin.BluetoothLE.IDevice;
 
@@ -74,15 +77,15 @@ namespace multibuzzer
             ClientScreen.Padding = new Thickness(10, 50);
 
             //set up lock on loading screen
-            Game.IsVisible = false;
-            LoadLabel.Text = "0";
-            LoadLabel.PropertyChanged += (label, e) =>
-            {
-                if (((Label)label).Text == "4")
-                {
-                    manageTeamChoice();
-                }
-            };
+            //Game.IsVisible = false;
+            //LoadLabel.Text = "0";
+            //LoadLabel.PropertyChanged += (label, e) =>
+            //{
+            //    if (((Label)label).Text == "4")
+            //    {
+            //        manageTeamChoice();
+            //    }
+            //};
         }
 
         private void ProcessScan(IScanResult scanResult)
@@ -197,10 +200,24 @@ namespace multibuzzer
             });
         }
 
+        Stream GetStreamFromFile(string filename)
+        {
+            var assembly = typeof(App).GetTypeInfo().Assembly;
+            var stream = assembly.GetManifestResourceStream("multibuzzer." + filename);
+            return stream;
+        }
+
         private async void Buzz(object sender, System.EventArgs e)
         {
+
             if (buzzerChar != null && lockStatus == 'O')
             {
+
+                //play sound
+                ISimpleAudioPlayer player = CrossSimpleAudioPlayer.Current;
+                player.Load(GetStreamFromFile("buzz1.mp3"));
+                player.Play();
+
                 //tentatively change color to promote feeling of fast response
                 lockStatus = 'U';
                 //attempt buzz

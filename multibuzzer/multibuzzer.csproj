@@ -9,9 +9,16 @@
     <PackageReference Include="Xamarin.Forms" Version="4.2.0.709249" />
     <PackageReference Include="Xamarin.Essentials" Version="1.2.0" />
     <PackageReference Include="Plugin.BluetoothLE" Version="6.2.6" />
+    <PackageReference Include="Xam.Plugin.SimpleAudioPlayer" Version="1.4.0" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="MyPage.xaml.cs" />
     <Compile Remove="EmptyClass.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="buzz1.mp3" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="buzz1.mp3" />
   </ItemGroup>
 </Project>
